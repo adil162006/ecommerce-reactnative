@@ -1,5 +1,6 @@
 import express from 'express';
 import path from "path"
+import { clerkMiddleware } from "@clerk/express";
 import {connectDB} from './config/db.js';
 import { ENV } from "./config/env.js";
 
@@ -7,8 +8,10 @@ const app = express();
 
 const __dirname = path.resolve();
 
+app.use(clerkMiddleware()); // adds auth object under the req => req.auth
 
 app.get('/', (req, res) => {
+  
   res.send('Hello, World!');
 });
 
