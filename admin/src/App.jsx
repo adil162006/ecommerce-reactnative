@@ -1,4 +1,4 @@
-import React from 'react'
+import React from "react";
 import { Navigate, Route, Routes } from "react-router";
 import LoginPage from "./pages/LoginPage";
 import { useAuth } from "@clerk/clerk-react";
@@ -10,10 +10,11 @@ import DashboardLayout from "./layouts/DashboardLayout";
 
 import PageLoader from "./components/PageLoader";
 
-
 function App() {
-    const { isSignedIn, isLoaded } = useAuth();
-     if (!isLoaded) return <PageLoader />;
+  const { isSignedIn, isLoaded } = useAuth();
+
+  if (!isLoaded) return <PageLoader />;
+
   return (
     <Routes>
       <Route path="/login" element={isSignedIn ? <Navigate to={"/dashboard"} /> : <LoginPage />} />
@@ -26,7 +27,7 @@ function App() {
         <Route path="customers" element={<CustomersPage />} />
       </Route>
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;

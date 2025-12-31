@@ -6,7 +6,7 @@
   "engines": {
     "node": ">=20.0.0"
   },
- "scripts": {
+  "scripts": {
     "build": "npm install --prefix backend && npm install --prefix admin --production=false && npm run build --prefix admin",
     "start": "npm run start --prefix backend"
   },
