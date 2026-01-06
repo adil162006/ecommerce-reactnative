@@ -1,17 +1,66 @@
 import { Stack } from "expo-router";
 import "../global.css";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ClerkProvider } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
+import * as Sentry from '@sentry/react-native';
 
-const queryClient = new QueryClient();
+Sentry.init({
+  dsn: 'https://0482447f25cb1271f36c208f9229df55@o4510628208115712.ingest.de.sentry.io/4510664278016080',
 
-export default function RootLayout() {
+  // Adds more context data to events (IP address, cookies, user, etc.)
+  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
+  sendDefaultPii: true,
+
+  // Enable Logs
+  enableLogs: true,
+
+  // Configure Session Replay
+  replaysSessionSampleRate: 1.0,
+  replaysOnErrorSampleRate: 1,
+  integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
+
+  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+  // spotlight: __DEV__,
+});
+
+const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error: any, query) => {
+      Sentry.captureException(error, {
+        tags: {
+          type: "react-query-error",
+          queryKey: query.queryKey[0]?.toString() || "unknon",
+        },
+        extra: {
+          errorMessage: error.message,
+          statusCode: error.response?.status,
+          queryKey: query.queryKey,
+        },
+      });
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error: any) => {
+      // global error handler for all mutations
+      Sentry.captureException(error, {
+        tags: { type: "react-query-mutation-error" },
+        extra: {
+          errorMessage: error.message,
+          statusCode: error.response?.status,
+        },
+      });
+    },
+  }),
+});;
+
+export default Sentry.wrap(function RootLayout() {
   return (
+    // @ts-ignore: ignoring missing ClerkProvider props
     <ClerkProvider tokenCache={tokenCache}>
       <QueryClientProvider client={queryClient}>
           <Stack screenOptions={{ headerShown: false }} />
       </QueryClientProvider>
     </ClerkProvider>
   );
-}
+});

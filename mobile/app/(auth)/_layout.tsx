@@ -7,7 +7,8 @@ export default function AuthRoutesLayout() {
   if (!isLoaded) return null; // for a better ux
 
   if (isSignedIn) {
-    return <Redirect href={"/"} />;
+    // @ts-ignore
+    return <Redirect href={"/(tabs)"} />;
   }
 
   return <Stack screenOptions={{ headerShown: false }} />;
