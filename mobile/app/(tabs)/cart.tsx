@@ -4,6 +4,7 @@ import SafeScreen from '@/components/SafeScreen'
 
 const CartScreen = () => {
   return (
+    // @ts-ignore
     <SafeScreen>
       <Text>CartScreen</Text>
     </SafeScreen>
