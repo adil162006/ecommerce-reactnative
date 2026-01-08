@@ -1,6 +1,5 @@
 import SafeScreen from "@/components/SafeScreen";
 import { useAuth, useUser } from "@clerk/clerk-expo";
-
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,8 +18,7 @@ const ProfileScreen = () => {
 
   const handleMenuPress = (action: (typeof MENU_ITEMS)[number]["action"]) => {
     if (action === "/profile") return;
-    // @ts-ignore
-    router.push(action);
+    router.push(action );
   };
 
   return (
@@ -98,7 +96,7 @@ const ProfileScreen = () => {
           <TouchableOpacity
             className="flex-row items-center justify-between py-2"
             activeOpacity={0.7}
-            // onPress={() => router.push("/privacy-security")}
+            onPress={() => router.push("/privacy-security")}
           >
             <View className="flex-row items-center">
               <Ionicons name="shield-checkmark-outline" size={22} color="#FFFFFF" />
