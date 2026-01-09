@@ -3,7 +3,8 @@ import "../global.css";
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ClerkProvider } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
-import * as Sentry from '@sentry/react-native';
+import * as Sentry from "@sentry/react-native";
+import { StripeProvider } from "@stripe/stripe-react-native";
 
 Sentry.init({
   dsn: 'https://0482447f25cb1271f36c208f9229df55@o4510628208115712.ingest.de.sentry.io/4510664278016080',
@@ -59,7 +60,9 @@ export default Sentry.wrap(function RootLayout() {
     // @ts-ignore: ignoring missing ClerkProvider props
     <ClerkProvider tokenCache={tokenCache}>
       <QueryClientProvider client={queryClient}>
+          <StripeProvider publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}>
           <Stack screenOptions={{ headerShown: false }} />
+        </StripeProvider>
       </QueryClientProvider>
     </ClerkProvider>
   );

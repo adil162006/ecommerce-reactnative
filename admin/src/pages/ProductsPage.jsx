@@ -25,6 +25,8 @@ function ProductsPage() {
     queryKey: ["products"],
     queryFn: productApi.getAll,
   });
+  
+  
 
   // creating, update, deleting
   const createProductMutation = useMutation({
