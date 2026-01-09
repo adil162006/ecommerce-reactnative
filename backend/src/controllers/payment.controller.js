@@ -78,12 +78,17 @@ export async function createPaymentIntent(req, res) {
         enabled: true,
       },
       metadata: {
-        clerkId: user.clerkId,
-        userId: user._id.toString(),
-        orderItems: JSON.stringify(validatedItems),
-        shippingAddress: JSON.stringify(shippingAddress),
-        totalPrice: total.toFixed(2),
-      },
+  clerkId: user.clerkId,
+  userId: user._id.toString(),
+  orderItems: JSON.stringify(
+    validatedItems.map(item => ({
+      product: item.product,  // just the product ID
+      quantity: item.quantity
+    }))
+  ),
+  shippingAddress: JSON.stringify(shippingAddress),
+  totalPrice: total.toFixed(2),
+},
       // in the webhooks section we will use this metadata
     });
 
@@ -122,7 +127,7 @@ export async function handleWebhook(req, res) {
 
       // create order
       const order = await Order.create({
-        user: userId,
+        user: userId, 
         clerkId,
         orderItems: JSON.parse(orderItems),
         shippingAddress: JSON.parse(shippingAddress),
