@@ -104,7 +104,11 @@ export async function handleWebhook(req, res) {
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, ENV.STRIPE_WEBHOOK_SECRET);
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      ENV.STRIPE_WEBHOOK_SECRET
+    );
   } catch (err) {
     console.error("Webhook signature verification failed:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -116,20 +120,49 @@ export async function handleWebhook(req, res) {
     console.log("Payment succeeded:", paymentIntent.id);
 
     try {
-      const { userId, clerkId, orderItems, shippingAddress, totalPrice } = paymentIntent.metadata;
+      const {
+        userId,
+        clerkId,
+        orderItems,
+        shippingAddress,
+        totalPrice,
+      } = paymentIntent.metadata;
 
-      // Check if order already exists (prevent duplicates)
-      const existingOrder = await Order.findOne({ "paymentResult.id": paymentIntent.id });
+      //  Prevent duplicate orders (VERY important)
+      const existingOrder = await Order.findOne({
+        "paymentResult.id": paymentIntent.id,
+      });
+
       if (existingOrder) {
         console.log("Order already exists for payment:", paymentIntent.id);
         return res.json({ received: true });
       }
 
-      // create order
+      //  FIX: rebuild full order items from DB
+      const minimalItems = JSON.parse(orderItems);
+      const fullOrderItems = [];
+
+      for (const item of minimalItems) {
+        const product = await Product.findById(item.product);
+
+        if (!product) {
+          throw new Error(`Product not found: ${item.product}`);
+        }
+
+        fullOrderItems.push({
+          product: product._id,
+          name: product.name,
+          image: product.images[0],
+          price: product.price,
+          quantity: item.quantity,
+        });
+      }
+
+      // ✅ Create order with FULL items
       const order = await Order.create({
-        user: userId, 
+        user: userId,
         clerkId,
-        orderItems: JSON.parse(orderItems),
+        orderItems: fullOrderItems,
         shippingAddress: JSON.parse(shippingAddress),
         paymentResult: {
           id: paymentIntent.id,
@@ -138,9 +171,8 @@ export async function handleWebhook(req, res) {
         totalPrice: parseFloat(totalPrice),
       });
 
-      // update product stock
-      const items = JSON.parse(orderItems);
-      for (const item of items) {
+      // ✅ Update stock safely
+      for (const item of fullOrderItems) {
         await Product.findByIdAndUpdate(item.product, {
           $inc: { stock: -item.quantity },
         });
