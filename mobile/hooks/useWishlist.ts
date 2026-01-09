@@ -1,44 +1,58 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useApi } from "@/lib/api";
 import { Product } from "@/types";
+import { useAuth } from "@clerk/clerk-expo";
 
 const useWishlist = () => {
   const api = useApi();
   const queryClient = useQueryClient();
+  const { isSignedIn, isLoaded } = useAuth();
 
   const {
-    data: wishlist,
+    data: wishlist = [],
     isLoading,
     isError,
   } = useQuery({
     queryKey: ["wishlist"],
+    enabled: isLoaded && isSignedIn, // 🔥 CRITICAL
     queryFn: async () => {
-      const { data } = await api.get<{ wishlist: Product[] }>("/users/wishlist");
-      return data.wishlist;
+      const res = await api.get<{ wishlist?: Product[] }>("/users/wishlist");
+      return res.data?.wishlist ?? [];
     },
   });
 
   const addToWishlistMutation = useMutation({
     mutationFn: async (productId: string) => {
-      const { data } = await api.post<{ wishlist: string[] }>("/users/wishlist", { productId });
-      return data.wishlist;
+      const { data } = await api.post<{ wishlist: string[] }>(
+        "/users/wishlist",
+        { productId }
+      );
+      return data.wishlist ?? [];
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["wishlist"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
+    },
   });
 
   const removeFromWishlistMutation = useMutation({
     mutationFn: async (productId: string) => {
-      const { data } = await api.delete<{ wishlist: string[] }>(`/users/wishlist/${productId}`);
-      return data.wishlist;
+      const { data } = await api.delete<{ wishlist: string[] }>(
+        `/users/wishlist/${productId}`
+      );
+      return data.wishlist ?? [];
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["wishlist"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
+    },
   });
 
   const isInWishlist = (productId: string) => {
-    return wishlist?.some((product) => product._id === productId) ?? false;
+    return wishlist.some((product) => product._id === productId);
   };
 
   const toggleWishlist = (productId: string) => {
+    if (!isSignedIn) return; // optional guard
+
     if (isInWishlist(productId)) {
       removeFromWishlistMutation.mutate(productId);
     } else {
@@ -47,14 +61,12 @@ const useWishlist = () => {
   };
 
   return {
-    wishlist: wishlist || [],
+    wishlist,
+    wishlistCount: wishlist.length,
     isLoading,
     isError,
-    wishlistCount: wishlist?.length || 0,
     isInWishlist,
     toggleWishlist,
-    addToWishlist: addToWishlistMutation.mutate,
-    removeFromWishlist: removeFromWishlistMutation.mutate,
     isAddingToWishlist: addToWishlistMutation.isPending,
     isRemovingFromWishlist: removeFromWishlistMutation.isPending,
   };

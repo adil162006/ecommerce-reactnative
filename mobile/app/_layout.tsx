@@ -57,13 +57,12 @@ const queryClient = new QueryClient({
 
 export default Sentry.wrap(function RootLayout() {
   return (
-    // @ts-ignore: ignoring missing ClerkProvider props
     <ClerkProvider tokenCache={tokenCache}>
       <QueryClientProvider client={queryClient}>
-          <StripeProvider publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}>
+        <StripeProvider publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}>
           <Stack screenOptions={{ headerShown: false }} />
         </StripeProvider>
       </QueryClientProvider>
     </ClerkProvider>
   );
-});
+});;

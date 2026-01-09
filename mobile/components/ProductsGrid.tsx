@@ -22,88 +22,95 @@ interface ProductsGridProps {
 const ProductsGrid = ({ products, isLoading, isError }: ProductsGridProps) => {
   const { isInWishlist, toggleWishlist, isAddingToWishlist, isRemovingFromWishlist } =
     useWishlist();
-
   const { isAddingToCart, addToCart } = useCart();
 
   const handleAddToCart = (productId: string, productName: string) => {
     addToCart(
       { productId, quantity: 1 },
       {
-        onSuccess: () => {
-          Alert.alert("Success", `${productName} added to cart!`);
-        },
-        onError: (error: any) => {
-          Alert.alert("Error", error?.response?.data?.error || "Failed to add to cart");
-        },
+        onSuccess: () => Alert.alert("Success", `${productName} added to cart!`),
+        onError: (error: any) =>
+          Alert.alert("Error", error?.response?.data?.error || "Failed to add to cart"),
       }
     );
   };
 
-  const renderProduct = ({ item: product }: { item: Product }) => (
-    <TouchableOpacity
-      className="bg-surface rounded-3xl overflow-hidden mb-3"
-      style={{ width: "48%" }}
-      activeOpacity={0.8}
-      onPress={() => router.push(`/product/${product._id}`)}
-    >
-      <View className="relative">
-        <Image
-          source={{ uri: product.images[0] }}
-          className="w-full h-44 bg-background-lighter"
-          resizeMode="cover"
-        />
+  const renderProduct = ({ item: product }: { item: Product }) => {
+    // fallback values for production safety
+    const productId = product._id ?? "";
+    const productName = product.name ?? "Unnamed Product";
+    const productImage = product.images?.[0] ?? "https://via.placeholder.com/200";
+    const productCategory = product.category ?? "Unknown";
+    const productPrice = product.price ?? 0;
+    const productRating = product.averageRating ?? 0;
+    const productReviews = product.totalReviews ?? 0;
 
-        <TouchableOpacity
-          className="absolute top-3 right-3 bg-black/30 backdrop-blur-xl p-2 rounded-full"
-          activeOpacity={0.7}
-          onPress={() => toggleWishlist(product._id)}
-          disabled={isAddingToWishlist || isRemovingFromWishlist}
-        >
-          {isAddingToWishlist || isRemovingFromWishlist ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <Ionicons
-              name={isInWishlist(product._id) ? "heart" : "heart-outline"}
-              size={18}
-              color={isInWishlist(product._id) ? "#FF6B6B" : "#FFFFFF"}
-            />
-          )}
-        </TouchableOpacity>
-      </View>
-
-      <View className="p-3">
-        <Text className="text-text-secondary text-xs mb-1">{product.category}</Text>
-        <Text className="text-text-primary font-bold text-sm mb-2" numberOfLines={2}>
-          {product.name}
-        </Text>
-
-        <View className="flex-row items-center mb-2">
-          <Ionicons name="star" size={12} color="#FFC107" />
-          <Text className="text-text-primary text-xs font-semibold ml-1">
-            {product.averageRating.toFixed(1)}
-          </Text>
-          <Text className="text-text-secondary text-xs ml-1">({product.totalReviews})</Text>
-        </View>
-
-        <View className="flex-row items-center justify-between">
-          <Text className="text-primary font-bold text-lg">${product.price.toFixed(2)}</Text>
+    return (
+      <TouchableOpacity
+        className="bg-surface rounded-3xl overflow-hidden mb-3"
+        style={{ width: "48%" }}
+        activeOpacity={0.8}
+        onPress={() => router.push(`/product/${productId}`)}
+      >
+        <View className="relative">
+          <Image
+            source={{ uri: productImage }}
+            className="w-full h-44 bg-background-lighter"
+            resizeMode="cover"
+          />
 
           <TouchableOpacity
-            className="bg-primary rounded-full w-8 h-8 items-center justify-center"
+            className="absolute top-3 right-3 bg-black/30 backdrop-blur-xl p-2 rounded-full"
             activeOpacity={0.7}
-            onPress={() => handleAddToCart(product._id, product.name)}
-            disabled={isAddingToCart}
+            onPress={() => toggleWishlist(productId)}
+            disabled={isAddingToWishlist || isRemovingFromWishlist}
           >
-            {isAddingToCart ? (
-              <ActivityIndicator size="small" color="#121212" />
+            {isAddingToWishlist || isRemovingFromWishlist ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
-              <Ionicons name="add" size={18} color="#121212" />
+              <Ionicons
+                name={isInWishlist(productId) ? "heart" : "heart-outline"}
+                size={18}
+                color={isInWishlist(productId) ? "#FF6B6B" : "#FFFFFF"}
+              />
             )}
           </TouchableOpacity>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+
+        <View className="p-3">
+          <Text className="text-text-secondary text-xs mb-1">{productCategory}</Text>
+          <Text className="text-text-primary font-bold text-sm mb-2" numberOfLines={2}>
+            {productName}
+          </Text>
+
+          <View className="flex-row items-center mb-2">
+            <Ionicons name="star" size={12} color="#FFC107" />
+            <Text className="text-text-primary text-xs font-semibold ml-1">
+              {productRating.toFixed(1)}
+            </Text>
+            <Text className="text-text-secondary text-xs ml-1">({productReviews})</Text>
+          </View>
+
+          <View className="flex-row items-center justify-between">
+            <Text className="text-primary font-bold text-lg">${productPrice.toFixed(2)}</Text>
+
+            <TouchableOpacity
+              className="bg-primary rounded-full w-8 h-8 items-center justify-center"
+              activeOpacity={0.7}
+              onPress={() => handleAddToCart(productId, productName)}
+              disabled={isAddingToCart}
+            >
+              {isAddingToCart ? (
+                <ActivityIndicator size="small" color="#121212" />
+              ) : (
+                <Ionicons name="add" size={18} color="#121212" />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -128,7 +135,7 @@ const ProductsGrid = ({ products, isLoading, isError }: ProductsGridProps) => {
     <FlatList
       data={products}
       renderItem={renderProduct}
-      keyExtractor={(item) => item._id}
+      keyExtractor={(item, index) => (item._id ? item._id : `product-${index}`)}
       numColumns={2}
       columnWrapperStyle={{ justifyContent: "space-between" }}
       showsVerticalScrollIndicator={false}
